@@ -91,7 +91,7 @@ const signUp = (req, res, next) => {
             if (user) {
               return next(
                 new HttpError(
-                  "Failed! Mobile number is already in use! try different mobilr number.",
+                  "Failed! Mobile number is already in use! try different mobile number.",
                   400
                 )
               );
