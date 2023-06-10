@@ -3,12 +3,19 @@ const { validationResult } = require("express-validator");
 const Admin = require("../models/adminModel");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const nodemailer = require("nodemailer");
+
 const dotenv = require("dotenv");
 dotenv.config();
+
+const nodemailer = require("nodemailer");
 const SECRET = process.env.SECRET;
 const NODEMAILER_USERNAME = process.env.NODEMAILER_USERNAME;
 const NODEMAILER_PASSWORD = process.env.NODEMAILER_PASSWORD;
+
+const sgMail = require("@sendgrid/mail");
+const SENDGRID_FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL;
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+sgMail.setApiKey(SENDGRID_API_KEY);
 
 const login = (req, res, next) => {
   const errors = validationResult(req);
@@ -91,7 +98,7 @@ const signUp = (req, res, next) => {
             if (user) {
               return next(
                 new HttpError(
-                  "Failed! Mobile number is already in use! try different mobile number.",
+                  "Failed! Mobile number is already in use! try different mobilr number.",
                   400
                 )
               );
@@ -371,32 +378,55 @@ const forgotPassword = (req, res, next) => {
                 )
               );
             }
-            const transporter = nodemailer.createTransport({
-              service: "gmail",
-              auth: {
-                user: NODEMAILER_USERNAME,
-                pass: NODEMAILER_PASSWORD,
-              },
-            });
-            const mailOptions = {
+            // const transporter = nodemailer.createTransport({
+            //   service: "gmail",
+            //   auth: {
+            //     user: NODEMAILER_USERNAME,
+            //     pass: NODEMAILER_PASSWORD,
+            //   },
+            // });
+            const msg = {
               to: user.email,
-              from: NODEMAILER_USERNAME,
+              from: SENDGRID_FROM_EMAIL,
               subject: "Vivaah Matrimony - Reset Password",
               html:
                 "<p>You are receiving this because you (or someone else) have requested the reset of the password for your account.</p>\n\n" +
-                // '<p>Please click on the following link, or paste this into your browser to complete the process:</p>\n\n' +
-                // `<a href=${mailLink} > Reset Password </a>` +
                 `<h4>Password: ${randomPassword}</h4>` +
-                "<p>If you did not request this, please ignore this email and your password will remain unchanged.</p>",
+                "<p>If you did not request this, please ignore this email and your password will remain unchanged.</p>" +
+                "<p>In case of any queries, please feel free to reach out to us at <a href='mailto:support@webology.in'>support@webology.in</a>.</p>",
             };
-            transporter.sendMail(mailOptions, function (err) {
-              if (err) {
-                return res.status(401).json(err);
-              }
-              return res.status(200).send({
-                message: `An e-mail has been sent to ${user.email} with new password, Please Login again with new Password.`,
+            sgMail
+              .send(msg)
+              .then((response) => {
+                console.log(response[0].statusCode);
+                console.log(response[0].headers);
+                return res.status(200).send({
+                  message: `An e-mail has been sent to ${user.email} with new password, Please Login again with new Password.`,
+                });
+              })
+              .catch((error) => {
+                console.error(error);
+                return res.status(401).json(error);
               });
-            });
+            // const mailOptions = {
+            //   to: user.email,
+            //   from: NODEMAILER_USERNAME,
+            //   subject: "Vivaah Matrimony - Reset Password",
+            //   html:
+            //     "<p>You are receiving this because you (or someone else) have requested the reset of the password for your account.</p>\n\n" +
+            //     // '<p>Please click on the following link, or paste this into your browser to complete the process:</p>\n\n' +
+            //     // `<a href=${mailLink} > Reset Password </a>` +
+            //     `<h4>Password: ${randomPassword}</h4>` +
+            //     "<p>If you did not request this, please ignore this email and your password will remain unchanged.</p>",
+            // };
+            // transporter.sendMail(mailOptions, function (err) {
+            //   if (err) {
+            //     return res.status(401).json(err);
+            //   }
+            //   return res.status(200).send({
+            //     message: `An e-mail has been sent to ${user.email} with new password, Please Login again with new Password.`,
+            //   });
+            // });
           })
           .catch((err) => {
             if (err) {
