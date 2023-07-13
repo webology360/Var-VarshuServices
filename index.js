@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const HttpError = require("./middlewares/httpError");
 const adminRoutes = require("./routes/adminRoutes");
 const userRoutes = require("./routes/userRoutes");
+const messageTypes = require("./utils/messageTypes");
 
 dotenv.config();
 const PORT = process.env.PORT;
@@ -28,6 +29,7 @@ app.use((error, req, res, next) => {
   }
   res.status(error.status || 500);
   res.json({
+    messageType: messageTypes.FAIL,
     message: error.message,
     status: error.status || "An unknown error occured",
   });

@@ -10,12 +10,29 @@ dotenv.config();
 const CONTAINER_NAME = process.env.CONTAINER_NAME;
 const STORAGE_ACCOUNT_NAME = process.env.STORAGE_ACCOUNT_NAME;
 const SAS_TOKEN = process.env.SAS_TOKEN;
+const ACCOUNT_SID = process.env.ACCOUNT_SID;
+const AUTH_TOKEN_TWILIO = process.env.AUTH_TOKEN_TWILIO;
+
+const sgMail = require("@sendgrid/mail");
+const messageTypes = require("../utils/messageTypes");
+const SENDGRID_FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL;
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+sgMail.setApiKey(SENDGRID_API_KEY);
+
+const ACCOUNT_MOBILE_NUMBER = process.env.ACCOUNT_MOBILE_NUMBER;
+const client = require("twilio")(ACCOUNT_SID, AUTH_TOKEN_TWILIO);
 
 const getUsers = (req, res, next) => {
   try {
     const { genderType } = req.params;
-    const { ageFrom, ageTo, state, location, value, motherTounge } = req.query;
+    const {
+      // ageFrom, ageTo, state, location,
+      value,
+      // , motherTounge
+    } = req.query;
 
+    const { ageFrom, ageTo, state, motherTounge } = req.body;
+    console.log(ageFrom, ageTo, state, motherTounge);
     const isSearchValueNumber =
       value !== undefined && value !== "" ? !isNaN(value) : false;
 
@@ -35,23 +52,23 @@ const getUsers = (req, res, next) => {
                     { annualIncome: { $in: parseInt(value) } },
                     { bodyComplexion: { $regex: value } },
                     { zodiacSign: { $regex: value } },
-                    {
-                      "presentAddress.location": {
-                        $regex: value,
-                        $options: "i",
-                      },
-                    },
+                    // {
+                    //   "presentAddress.location": {
+                    //     $regex: value,
+                    //     $options: "i",
+                    //   },
+                    // },
                     {
                       "presentAddress.state": { $regex: value, $options: "i" },
                     },
                     { "presentAddress.area": { $regex: value, $options: "i" } },
                     { "presentAddress.pincode": { $in: parseInt(value) } },
-                    {
-                      "permanentAddress.location": {
-                        $regex: value,
-                        $options: "i",
-                      },
-                    },
+                    // {
+                    //   "permanentAddress.location": {
+                    //     $regex: value,
+                    //     $options: "i",
+                    //   },
+                    // },
                     {
                       "permanentAddress.state": {
                         $regex: value,
@@ -80,22 +97,22 @@ const getUsers = (req, res, next) => {
                     { education: { $regex: value, $options: "i" } },
                     { bodyComplexion: { $regex: value } },
                     { zodiacSign: { $regex: value } },
-                    {
-                      "presentAddress.location": {
-                        $regex: value,
-                        $options: "i",
-                      },
-                    },
+                    // {
+                    //   "presentAddress.location": {
+                    //     $regex: value,
+                    //     $options: "i",
+                    //   },
+                    // },
                     {
                       "presentAddress.state": { $regex: value, $options: "i" },
                     },
                     { "presentAddress.area": { $regex: value, $options: "i" } },
-                    {
-                      "permanentAddress.location": {
-                        $regex: value,
-                        $options: "i",
-                      },
-                    },
+                    // {
+                    //   "permanentAddress.location": {
+                    //     $regex: value,
+                    //     $options: "i",
+                    //   },
+                    // },
                     {
                       "permanentAddress.state": {
                         $regex: value,
@@ -128,16 +145,16 @@ const getUsers = (req, res, next) => {
                   },
                 ],
               },
-              {
-                $or: [
-                  {
-                    "presentAddress.location": location,
-                  },
-                  {
-                    "permanentAddress.location": location,
-                  },
-                ],
-              },
+              // {
+              //   $or: [
+              //     {
+              //       "presentAddress.location": location,
+              //     },
+              //     {
+              //       "permanentAddress.location": location,
+              //     },
+              //   ],
+              // },
             ],
           };
     User.find(query)
@@ -149,6 +166,8 @@ const getUsers = (req, res, next) => {
           );
         }
         return res.status(200).send({
+          messageType:
+            users?.length > 0 ? messageTypes.SUCCESS : messageTypes.FAIL,
           message:
             users?.length > 0
               ? "users found successfully!"
@@ -187,6 +206,8 @@ const getTopProfiles = (req, res, next) => {
           );
         }
         return res.status(200).send({
+          messageType:
+            users?.length > 0 ? messageTypes.SUCCESS : messageTypes.FAIL,
           message:
             users?.length > 0
               ? "users found successfully!"
@@ -214,7 +235,10 @@ const getTopProfiles = (req, res, next) => {
 const addUser = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(422).json({ message: errors.array(), status: 422 });
+    return res.status(422).json({
+      messageType: messageTypes.FAIL,
+      message: errors.array(),
+    });
   }
   try {
     // const { user_id } = req.user;
@@ -223,6 +247,8 @@ const addUser = (req, res, next) => {
       middleName,
       lastName,
       dateOfBirth,
+      email,
+      mobileNumber,
       occupation,
       education,
       preferredPartnerChoice,
@@ -231,6 +257,7 @@ const addUser = (req, res, next) => {
       age,
       bodyComplexion,
       motherTounge,
+      employmentType,
       familyMembersAndRelations,
       zodiacSign,
       presentAddress,
@@ -250,6 +277,8 @@ const addUser = (req, res, next) => {
       middleName: middleName,
       lastName: lastName,
       dateOfBirth: dateOfBirthFormat,
+      email: email,
+      mobileNumber: mobileNumber,
       occupation: occupation,
       education: education,
       preferredPartnerChoice: preferredPartnerChoice,
@@ -258,6 +287,7 @@ const addUser = (req, res, next) => {
       age: age,
       bodyComplexion: bodyComplexion,
       motherTounge: motherTounge,
+      employmentType: employmentType,
       familyMembersAndRelations: familyMembersAndRelations,
       zodiacSign: zodiacSign,
       presentAddress: presentAddress,
@@ -274,9 +304,11 @@ const addUser = (req, res, next) => {
         if (!user) {
           return next(new HttpError("Can not get user while adding data", 404));
         }
-        return res
-          .status(201)
-          .send({ message: "User was successfully added!", data: user });
+        return res.status(201).send({
+          messageType: messageTypes.SUCCESS,
+          message: "User was successfully added!",
+          data: user,
+        });
       })
       .catch((err) => {
         if (err) {
@@ -314,6 +346,7 @@ const uploadBioData = async (req, res, next) => {
           return next(new HttpError("No user data found on given id", 404));
         }
         return res.status(201).send({
+          messageType: messageTypes.SUCCESS,
           message: "Biodata was successfully uploaded!",
           data: user,
         });
@@ -369,6 +402,7 @@ const uploadImages = async (req, res, next) => {
           return next(new HttpError("No user data found on given id", 404));
         }
         return res.status(201).send({
+          messageType: messageTypes.SUCCESS,
           message: "Images was successfully uploaded!",
           data: user,
         });
@@ -393,7 +427,10 @@ const uploadImages = async (req, res, next) => {
 const updateUser = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(422).json({ message: errors.array(), status: 422 });
+    return res.status(422).json({
+      messageType: messageTypes.FAIL,
+      message: errors.array(),
+    });
   }
   try {
     const { userId } = req.params;
@@ -402,6 +439,8 @@ const updateUser = (req, res, next) => {
       middleName,
       lastName,
       dateOfBirth,
+      email,
+      mobileNumber,
       occupation,
       education,
       preferredPartnerChoice,
@@ -410,6 +449,7 @@ const updateUser = (req, res, next) => {
       age,
       bodyComplexion,
       motherTounge,
+      employmentType,
       familyMembersAndRelations,
       zodiacSign,
       presentAddress,
@@ -427,6 +467,8 @@ const updateUser = (req, res, next) => {
       middleName: middleName,
       lastName: lastName,
       dateOfBirth: dateOfBirthFormat,
+      email: email,
+      mobileNumber: mobileNumber,
       occupation: occupation,
       education: education,
       preferredPartnerChoice: preferredPartnerChoice,
@@ -436,6 +478,7 @@ const updateUser = (req, res, next) => {
       age: age,
       bodyComplexion: bodyComplexion,
       motherTounge: motherTounge,
+      employmentType: employmentType,
       familyMembersAndRelations: familyMembersAndRelations,
       zodiacSign: zodiacSign,
       presentAddress: presentAddress,
@@ -452,12 +495,12 @@ const updateUser = (req, res, next) => {
           return next(new HttpError("No user data found on given id", 404));
         }
         return res.status(201).send({
+          messageType: messageTypes.SUCCESS,
           message: "User was successfully updated!",
           data: user,
         });
       })
       .catch((err) => {
-        console.log(err);
         if (err) {
           return next(
             new HttpError(
@@ -493,6 +536,7 @@ const getUser = (req, res, next) => {
                 );
               }
               return res.status(201).send({
+                messageType: messageTypes.SUCCESS,
                 message: "User was found successfully!",
                 data: updatedUser,
               });
@@ -509,6 +553,7 @@ const getUser = (req, res, next) => {
             });
         } else {
           return res.status(201).send({
+            messageType: messageTypes.SUCCESS,
             message: "User was found successfully!",
             data: user,
           });
@@ -551,6 +596,7 @@ const toggleUserStatus = (req, res, next) => {
               );
             }
             return res.status(200).send({
+              messageType: messageTypes.SUCCESS,
               message:
                 user.status === userStatus.ACTIVE
                   ? "User was disabled successfully"
@@ -593,6 +639,7 @@ const deleteUser = (req, res, next) => {
           return next(new HttpError("No user Found on given Id", 400));
         }
         return res.status(200).send({
+          messageType: messageTypes.SUCCESS,
           message: "user was successfully deleted!",
           data: user,
         });
@@ -609,9 +656,80 @@ const deleteUser = (req, res, next) => {
   }
 };
 
+const sendMessage = (req, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    const { mobileNumber, emailId } = req.body;
+
+    User.findById(userId)
+      .select("-password")
+      .then((user) => {
+        if (!user) {
+          return next(new HttpError("no user found on given id", 404));
+        }
+        const msg = {
+          to: emailId,
+          from: SENDGRID_FROM_EMAIL,
+          subject: "Vivaah Matrimony - Profile Information",
+          html: `<h4>User Name: ${user.firstName + " " + user.lastName}</h4>`,
+        };
+        sgMail
+          .send(msg)
+          .then((response) => {
+            console.log(response[0].statusCode);
+            console.log(response[0].headers);
+            client.messages
+              .create({
+                body: `User Name: ${user.firstName + " " + user.lastName}`,
+                from: ACCOUNT_MOBILE_NUMBER,
+                to: `+91${mobileNumber}`,
+              })
+              .then((message) => {
+                console.log(message.sid);
+                return res.status(200).send({
+                  messageType: messageTypes.SUCCESS,
+                  message: `User Information has been sent to ${emailId} and ${mobileNumber} with user contact details.`,
+                });
+              })
+              .catch((error) => {
+                console.error(error);
+                // return res.status(401).json(error);
+                return next(
+                  new HttpError(
+                    "unexpected error occurred while sending message",
+                    401
+                  )
+                );
+              });
+          })
+          .catch((error) => {
+            console.error(error);
+            // return res.status(401).json(error);
+            return next(
+              new HttpError("unexpected error occurred while sending mail", 401)
+            );
+          });
+      })
+      .catch((err) => {
+        if (err) {
+          return next(
+            new HttpError(
+              "unexpected error occurred while finding matching user",
+              500
+            )
+          );
+        }
+      });
+  } catch (error) {
+    return next(new HttpError("unexpected error occurred", 500));
+  }
+};
+
 exports.getUsers = getUsers;
 exports.getTopProfiles = getTopProfiles;
 exports.addUser = addUser;
+exports.sendMessage = sendMessage;
 exports.uploadImages = uploadImages;
 exports.uploadBioData = uploadBioData;
 exports.updateUser = updateUser;

@@ -2,21 +2,24 @@ const mongoose = require("mongoose");
 
 const addressSchema = new mongoose.Schema({
   state: { type: String, required: true },
-  location: { type: String, required: true },
+  // location: { type: String, required: true },
   area: { type: String, required: true },
   pincode: { type: Number, required: true },
 });
 const familyMembersAndRelationsSchema = new mongoose.Schema({
   name: { type: String, required: true },
   relation: { type: String, required: true },
+  occupation: { type: String, required: true },
 });
 
 const UserSchema = new mongoose.Schema(
   {
     firstName: { type: String, required: true },
-    middleName: { type: String, required: true },
+    middleName: { type: String },
     lastName: { type: String, required: true },
     dateOfBirth: { type: Date, required: true },
+    email: { type: String, required: true },
+    mobileNumber: { type: String, required: true },
     occupation: { type: String, required: true },
     education: { type: String, required: true },
     preferredPartnerChoice: { type: String, required: true },
@@ -25,6 +28,7 @@ const UserSchema = new mongoose.Schema(
     age: { type: Number, required: true },
     bodyComplexion: { type: String, required: true },
     motherTounge: { type: String, required: true },
+    employmentType: { type: Number, required: true },
     familyMembersAndRelations: [familyMembersAndRelationsSchema],
     zodiacSign: { type: String, required: true },
     presentAddress: { type: addressSchema, required: true },

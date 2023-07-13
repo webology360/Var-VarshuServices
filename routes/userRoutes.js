@@ -6,6 +6,7 @@ const {
   getTopProfiles,
   toggleUserStatus,
   getUser,
+  sendMessage,
   addUser,
   uploadImages,
   updateUser,
@@ -20,10 +21,13 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // getAll users by gender/type
-router.get("/list/:genderType", getUsers);
+router.post("/list/:genderType", getUsers);
 
 // getAll users by view count by gender/type
 router.get("/topProfiles/:genderType", auth, getTopProfiles);
+
+// send user info via message
+router.post("/sendMessage/:userId", sendMessage);
 
 // toggle user status
 router.put("/toggleStatus/:userId", auth, toggleUserStatus);
@@ -40,9 +44,11 @@ router.post(
   auth,
   [
     check("firstName").not().isEmpty(),
-    check("middleName").not().isEmpty(),
+    // check("middleName").not().isEmpty(),
     check("lastName").not().isEmpty(),
     check("dateOfBirth").not().isEmpty(),
+    check("email").normalizeEmail().isEmail(),
+    check("mobileNumber").not().isEmpty(),
     check("occupation").not().isEmpty(),
     check("education").not().isEmpty(),
     check("preferredPartnerChoice").not().isEmpty(),
@@ -51,6 +57,7 @@ router.post(
     check("age").not().isEmpty().isInt({ min: 18 }),
     check("bodyComplexion").not().isEmpty(),
     check("motherTounge").not().isEmpty(),
+    check("employmentType").not().isEmpty(),
     check("familyMembersAndRelations").not().isEmpty(),
     check("zodiacSign").not().isEmpty(),
     check("presentAddress").not().isEmpty(),
@@ -83,9 +90,11 @@ router.put(
   auth,
   [
     check("firstName").not().isEmpty(),
-    check("middleName").not().isEmpty(),
+    // check("middleName").not().isEmpty(),
     check("lastName").not().isEmpty(),
     check("dateOfBirth").not().isEmpty(),
+    check("email").normalizeEmail().isEmail(),
+    check("mobileNumber").not().isEmpty(),
     check("occupation").not().isEmpty(),
     check("education").not().isEmpty(),
     check("preferredPartnerChoice").not().isEmpty(),
@@ -94,6 +103,7 @@ router.put(
     check("age").not().isEmpty().isInt({ min: 18 }),
     check("bodyComplexion").not().isEmpty(),
     check("motherTounge").not().isEmpty(),
+    check("employmentType").not().isEmpty(),
     check("familyMembersAndRelations").not().isEmpty(),
     check("zodiacSign").not().isEmpty(),
     check("presentAddress").not().isEmpty(),

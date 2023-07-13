@@ -13,6 +13,7 @@ const NODEMAILER_USERNAME = process.env.NODEMAILER_USERNAME;
 const NODEMAILER_PASSWORD = process.env.NODEMAILER_PASSWORD;
 
 const sgMail = require("@sendgrid/mail");
+const messageTypes = require("../utils/messageTypes");
 const SENDGRID_FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL;
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 sgMail.setApiKey(SENDGRID_API_KEY);
@@ -20,7 +21,10 @@ sgMail.setApiKey(SENDGRID_API_KEY);
 const login = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(422).json({ message: errors.array(), status: 422 });
+    return res.status(422).json({
+      messageType: messageTypes.FAIL,
+      message: errors.array(),
+    });
   }
   try {
     const { userId, password } = req.body;
@@ -46,8 +50,8 @@ const login = (req, res, next) => {
         });
 
         res.status(200).send({
+          messageType: messageTypes.SUCCESS,
           message: "Login Successful!",
-          status: 200,
           token,
           resetPassword: user?.resetPassword,
         });
@@ -67,7 +71,10 @@ const login = (req, res, next) => {
 const signUp = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(422).json({ message: errors.array(), status: 422 });
+    return res.status(422).json({
+      messageType: messageTypes.FAIL,
+      message: errors.array(),
+    });
   }
   try {
     const { userId, mobileNumber, email, password, firstName, lastName } =
@@ -107,8 +114,8 @@ const signUp = (req, res, next) => {
               .save()
               .then((user) => {
                 res.status(201).send({
+                  messageType: messageTypes.SUCCESS,
                   message: "User was successfully registered!",
-                  status: 201,
                 });
               })
               .catch((err) => {
@@ -152,7 +159,10 @@ const signUp = (req, res, next) => {
 const updateAdmin = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(422).json({ message: errors.array(), status: 422 });
+    return res.status(422).json({
+      messageType: messageTypes.FAIL,
+      message: errors.array(),
+    });
   }
   try {
     const { adminId } = req.params;
@@ -172,6 +182,7 @@ const updateAdmin = (req, res, next) => {
           return next(new HttpError("No user data found on given id", 404));
         }
         return res.status(200).send({
+          messageType: messageTypes.SUCCESS,
           message: "User was successfully updated!",
           data: user,
         });
@@ -200,9 +211,9 @@ const profile = (req, res, next) => {
       .then((user) => {
         if (!!user) {
           return res.status(200).json({
+            messageType: messageTypes.SUCCESS,
             message: `Welcome, ${user.firstName}`,
             data: user,
-            status: 200,
           });
         }
         return next(new HttpError("no user found", 404));
@@ -222,7 +233,10 @@ const profile = (req, res, next) => {
 const changePassword = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(422).json({ message: errors.array(), status: 422 });
+    return res.status(422).json({
+      messageType: messageTypes.FAIL,
+      message: errors.array(),
+    });
   }
   try {
     const { oldPassword, newPassword } = req.body;
@@ -250,6 +264,7 @@ const changePassword = (req, res, next) => {
                 );
               }
               return res.status(200).send({
+                messageType: messageTypes.SUCCESS,
                 message: "Password successfully updated!",
               });
             })
@@ -280,7 +295,10 @@ const changePassword = (req, res, next) => {
 const resetPassword = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(422).json({ message: errors.array(), status: 422 });
+    return res.status(422).json({
+      messageType: messageTypes.FAIL,
+      message: errors.array(),
+    });
   }
   try {
     const { userId } = req.params;
@@ -318,8 +336,8 @@ const resetPassword = (req, res, next) => {
                 expiresIn: expirationSeconds, // 24 hours
               });
               return res.status(200).send({
+                messageType: messageTypes.SUCCESS,
                 message: "Password successfully updated!",
-                status: 200,
                 token,
               });
             })
@@ -351,7 +369,10 @@ const resetPassword = (req, res, next) => {
 const forgotPassword = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(422).json({ message: errors.array(), status: 422 });
+    return res.status(422).json({
+      messageType: messageTypes.FAIL,
+      message: errors.array(),
+    });
   }
   try {
     const { adminId } = req.params;
@@ -401,12 +422,19 @@ const forgotPassword = (req, res, next) => {
                 console.log(response[0].statusCode);
                 console.log(response[0].headers);
                 return res.status(200).send({
+                  messageType: messageTypes.SUCCESS,
                   message: `An e-mail has been sent to ${user.email} with new password, Please Login again with new Password.`,
                 });
               })
               .catch((error) => {
                 console.error(error);
-                return res.status(401).json(error);
+                // return res.status(401).json(error);
+                return next(
+                  new HttpError(
+                    "unexpected error occurred while sending mail",
+                    401
+                  )
+                );
               });
             // const mailOptions = {
             //   to: user.email,
