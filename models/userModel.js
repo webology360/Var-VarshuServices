@@ -22,7 +22,7 @@ const UserSchema = new mongoose.Schema(
     mobileNumber: { type: String, required: true },
     occupation: { type: String, required: true },
     education: { type: String, required: true },
-    preferredPartnerChoice: { type: String, default: 'Not-Mentioned' },
+    preferredPartnerChoice: { type: String, required: true },
     gender: { type: Number, required: true },
     height: { type: Number, required: true },
     age: { type: Number, required: true },
@@ -30,7 +30,7 @@ const UserSchema = new mongoose.Schema(
     motherTounge: { type: String, required: true },
     employmentType: { type: Number, required: true },
     familyMembersAndRelations: [familyMembersAndRelationsSchema],
-    zodiacSign: { type: String, default: 'Not-Mentioned' },
+    zodiacSign: { type: String, required: true },
     presentAddress: { type: addressSchema, required: true },
     permanentAddress: { type: addressSchema, required: true },
     bioData: { type: String },
@@ -38,7 +38,7 @@ const UserSchema = new mongoose.Schema(
     imgList: { type: Array },
     annualIncome: { type: Number, default: 0 },
     status: { type: Number, default: 1 },
-    viewCount: { type: Number, default: 0 },
+    viewCount: { type: Number, required: true },
   },
   { timestamps: true }
 );
