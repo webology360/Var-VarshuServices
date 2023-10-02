@@ -36,9 +36,9 @@ const UserSchema = new mongoose.Schema(
     bioData: { type: String },
     remarks: { type: String, required: true },
     imgList: { type: Array },
-    annualIncome: { type: Number, default: 0 },
+    annualIncome: { type: Number, required: true },
     status: { type: Number, default: 1 },
-    viewCount: { type: Number, required: true },
+    viewCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
